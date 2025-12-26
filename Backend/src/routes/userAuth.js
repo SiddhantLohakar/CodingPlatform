@@ -1,5 +1,5 @@
 const express = require('express')
-const {register, verifyEmail, login} = require("../controllers/userAuthent");
+const {register, verifyEmail, login, logout} = require("../controllers/userAuthent");
 
 const authRouter = express.Router();
 
@@ -8,7 +8,7 @@ authRouter.post('/register', register);
 // // Login
 authRouter.post('/login', login);
 // // Logout
-// authRouter.post('/logout', logout);
+authRouter.post('/logout', logout);
 // // GetProfile
 // authRouter.get('/profile', getProfile);
 // // Forgot Password

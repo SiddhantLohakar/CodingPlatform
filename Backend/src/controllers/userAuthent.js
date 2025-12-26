@@ -152,7 +152,25 @@ async function login(req, res)
 
 }
 
-module.exports = {register, verifyEmail, login};
+async function logout(req, res)
+{
+    try{
+        const token = req.cookies.token;
+        if(!token)
+            throw new error("No token found");
+
+        const isValid = jwt.verify(token, process.env.JWT_SECRET);
+
+        res.cookie("token", "");
+        res.status(200).send("Logout successful");     
+    }
+    catch(error)
+    {
+        res.status(401).json({message: error.message});
+    }
+}
+
+module.exports = {register, verifyEmail, login, logout};
 
 
 
