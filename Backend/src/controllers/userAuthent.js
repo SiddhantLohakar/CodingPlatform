@@ -4,6 +4,7 @@ const validator = require("validator")
 const bcrypt = require("bcrypt")
 const jwt = require("jsonwebtoken");
 const  sendVerificationEmail = require("../utils/sendEmail") 
+const validateLogin = require('../utils/validateLogin')
 
 
 async function register(req, res)
@@ -110,7 +111,48 @@ async function verifyEmail(req, res)
     }
 }
 
-module.exports = {register, verifyEmail};
+
+async function login(req, res)
+{   try
+    {
+          // Get the data 
+        const data = req.body;
+
+        const sanitizedData = validateLogin(data);
+
+        const user = await User.findOne({email: sanitizedData.email});
+        if(!user)
+        {
+           throw new Error("Invalid credentials"); 
+        }
+
+        const isValid = await bcrypt.compare(sanitizedData.password, user.password);
+        if(!isValid)
+            throw new Error("Invalid credentials");
+
+        // Generate the token
+        const token = jwt.sign({email: user.email, _id: user._id}, process.env.JWT_SECRET, {expiresIn: "24h"});
+        
+        if(!user.isEmailVerified)
+        {
+            await sendVerificationEmail(user.email, token)
+            res.status(200).send("Please check your email for verification")
+        }
+        else
+        {
+            res.cookie("token", token, {expires: new Date(Date.now() + 24 * 60 * 60 * 1000)});
+            res.status(200).json({message: "User Login successful"});
+        }
+
+    }
+    catch(error)
+    {
+        res.status(401).json({message: "Invalid email or password"});
+    }
+
+}
+
+module.exports = {register, verifyEmail, login};
 
 
 

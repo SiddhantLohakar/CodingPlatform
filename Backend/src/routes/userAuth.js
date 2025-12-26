@@ -1,12 +1,12 @@
 const express = require('express')
-const {register, verifyEmail} = require("../controllers/userAuthent");
+const {register, verifyEmail, login} = require("../controllers/userAuthent");
 
 const authRouter = express.Router();
 
 // Register
 authRouter.post('/register', register);
 // // Login
-// authRouter.post('/login', login);
+authRouter.post('/login', login);
 // // Logout
 // authRouter.post('/logout', logout);
 // // GetProfile
