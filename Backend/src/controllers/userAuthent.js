@@ -5,6 +5,9 @@ const bcrypt = require("bcrypt")
 const jwt = require("jsonwebtoken");
 const  sendVerificationEmail = require("../utils/sendEmail") 
 const validateLogin = require('../utils/validateLogin')
+const validateResetPassword = require("../utils/validateResetPassword")
+const redisClient = require("../config/redis")
+
 
 
 async function register(req, res)
@@ -23,7 +26,7 @@ async function register(req, res)
     
         data.password = await bcrypt.hash(data.password, 10);
         const user =  await User.create(data);
-        const token = jwt.sign({email: user.email, _id : user._id}, process.env.JWT_SECRET, {expiresIn: "24h"});
+        const token = jwt.sign({email: user.email, _id : user._id, role: "user"}, process.env.JWT_SECRET, {expiresIn: "24h"});
 
         await sendVerificationEmail(user.email, token);
 
@@ -41,7 +44,6 @@ async function register(req, res)
 
 async function verifyEmail(req, res)
 {
-    console.log("Email Verification")
     try{
         const token = req.query.token;
         if(!token)
@@ -131,7 +133,7 @@ async function login(req, res)
             throw new Error("Invalid credentials");
 
         // Generate the token
-        const token = jwt.sign({email: user.email, _id: user._id}, process.env.JWT_SECRET, {expiresIn: "24h"});
+        const token = jwt.sign({email: user.email, _id: user._id, }, process.env.JWT_SECRET, {expiresIn: "24h"});
         
         if(!user.isEmailVerified)
         {
@@ -155,22 +157,78 @@ async function login(req, res)
 async function logout(req, res)
 {
     try{
-        const token = req.cookies.token;
-        if(!token)
-            throw new error("No token found");
+       
+       const {token} = req.cookies;
+    
+       
+       const payload = jwt.decode(token);
+    
 
-        const isValid = jwt.verify(token, process.env.JWT_SECRET);
+       await redisClient.set(`token:${token}`, "Blocked");
+   
+      await redisClient.expireAt(`token:${token}`,payload.exp);
 
-        res.cookie("token", "");
-        res.status(200).send("Logout successful");     
+       res.cookie("token",null,{expires: new Date(Date.now())});
+       res.send("Logged Out Succesfully");
     }
-    catch(error)
-    {
-        res.status(401).json({message: error.message});
+    catch(err){
+        res.send("Error: "+err.message);
     }
 }
 
-module.exports = {register, verifyEmail, login, logout};
+async function resetPassword(req, res)
+{
+    try{
+
+       const data = req.body;
+       validateResetPassword(data);
+       
+       
+
+        const isValid = await bcrypt.compare(data.oldPassword, req.result.password);
+        if(!isValid)
+            throw new Error("Invalid Old Password");
+
+        const password = await bcrypt.hash(data.newPassword, 10);
+
+        await User.updateOne({_id: req.result._id}, {password: password});
+
+        res.cookie("token", "");
+        res.status(200).send("Password updated  successfully");
+
+    }catch(error)
+    {
+        res.status(401).json({message:error.message});
+    }
+}
+
+async function registerAdmin(req, res)
+{
+
+    const data = validate(req.body);
+
+    if(Number.isNaN(data.age))
+    {
+        delete data.age
+    }
+
+    const isExisting = await User.findOne({email: data.email});
+    if(isExisting)
+        throw new Error("Email already registered");
+
+    data.password = await bcrypt.hash(data.password, 10);
+    data.role = "admin";
+    const user =  await User.create(data);
+
+    const token = jwt.sign({email: user.email, _id : user._id, role: "user"}, process.env.JWT_SECRET, {expiresIn: "24h"});
+
+    await sendVerificationEmail(user.email, token);
+
+    res.status(201).send("Admin registration successfull, Check your email for verification");
+
+}
+
+module.exports = {register, verifyEmail, login, logout, resetPassword, registerAdmin};
 
 
 

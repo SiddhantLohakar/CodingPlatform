@@ -3,6 +3,7 @@ const dotenv = require("dotenv");
 const main = require("./config/database");
 const cookieParser = require('cookie-parser')
 const authRouter = require('./routes/userAuth')
+const redisClient = require("./config/redis")
 
 const app = express();
 dotenv.config();
@@ -22,7 +23,7 @@ app.use("/auth", authRouter)
 async function InitializeServer() {
   
     try {
-        await main();
+        await Promise.all([main(), redisClient.connect()]);
         console.log("Database connection succssful");
 
     
