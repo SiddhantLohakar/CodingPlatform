@@ -15,7 +15,7 @@ const problemSchema = new Schema({
   
     difficulty:{
         type: String,
-        enum: [easy, medium, hard],
+        enum: ["easy", "medium", "hard"],
         required: true
     },
    
@@ -61,6 +61,17 @@ const problemSchema = new Schema({
             required: true,
         },
         initialCode:{
+            type: String,
+            required: true
+        }
+    }],
+
+     referenceSolution: [{
+        language:{
+            type: String,
+            required: true,
+        },
+        completeCode:{
             type: String,
             required: true
         }
