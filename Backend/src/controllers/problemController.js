@@ -48,7 +48,7 @@ const createProblem = async (req, res)=>{
                     
                 }catch(err)
                 {
-                    res.status().json({message: err.message});
+                    res.status(500).json({message: err.message});
                 }
                
         }

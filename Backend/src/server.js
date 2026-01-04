@@ -5,6 +5,7 @@ const cookieParser = require('cookie-parser')
 const authRouter = require('./routes/userAuth')
 const redisClient = require("./config/redis")
 const problemRouter = require("./routes/problemRoute")
+const submissionRouter = require("./routes/submissionRouter")
 
 const app = express();
 dotenv.config();
@@ -16,6 +17,7 @@ app.use(express.json());
 app.use(cookieParser());
 app.use("/auth", authRouter)
 app.use("/problem", problemRouter)
+app.use("/submission", submissionRouter);
 
 
 
