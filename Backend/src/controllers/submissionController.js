@@ -104,4 +104,50 @@ async function submit(req, res){
 
 }
 
-module.exports = submit
+async function run(req, res){
+     const data = req.body;
+
+    if(!data || !data.problemId || !data.inputCode || !data.language){
+        return res.status(400).json({"message": " problemId, inputCode and language are required"});
+    }
+
+    const problem = await Problem.findById(data.problemId);
+
+    if(!problem)
+        return res.status(404).json({"message" : "Problem not found"});
+
+    
+    try{
+        const languageId = getLanguageId(data.language);
+        
+        
+        const Batch =  problem.visibleTestCases.map(({input, output})=>{
+            return{
+                source_code: data.inputCode,
+                language_id: languageId,
+                stdin: input,
+                expected_output: output
+            }
+        })
+
+        const result = await submitBatch(Batch);
+
+        const tokenArray = result.map((obj)=>{
+            return obj.token;
+        })
+        const tokenString = tokenArray.join(",")
+        const batchResult = await getBatchResult(tokenString);
+        res.status(201).send(batchResult);
+
+
+
+    }catch(err)
+    {
+        res.status(500).send("Internal Server : "+ err.message);
+    }
+
+
+
+}
+
+module.exports = {submit, run}
