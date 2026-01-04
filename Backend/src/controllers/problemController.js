@@ -1,6 +1,8 @@
 const validateProblem = require("../utils/validateProblem")
 const {getLanguageId, submitBatch, getBatchResult} = require("../utils/ProblemId")
- const Problem = require("../models/problem")
+const Problem = require("../models/problem");
+const User = require("../models/user")
+const { populate } = require("../models/user");
 
 const createProblem = async (req, res)=>{
 
@@ -182,5 +184,21 @@ const getAllProblems = async(req, res)=>{
 }
 
 
+const getSolvedProblems = async(req, res)=>{
+    try{
+        const id = req.result._id;
 
-module.exports = {createProblem, updateProblem, deleteProblem, getProblem, getAllProblems}
+        const user = await User.findById(id).populate({
+            path: "problemSolved",
+            select: ["title", "_id", "description", "difficulty"] 
+        })
+        res.status(200).send(user.problemSolved);
+    }
+    catch(err)
+    {
+        res.status(500).send("Internal server error: "+ err.message);
+    }
+}
+
+
+module.exports = {createProblem, updateProblem, deleteProblem, getProblem, getAllProblems, getSolvedProblems}
