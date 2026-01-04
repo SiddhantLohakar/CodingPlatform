@@ -34,8 +34,17 @@ const submissionSchema = new Schema({
     language:{
         type: String,
         required: true
+    },
+    error: {
+        type: String,
+        required: true
+    },
+    passedCases: {
+        type: Number,
+        required: true,
+        default: 0
     }
 })
 
-const Submission = mongoose.Model("submission", submissionSchema)
+const Submission = mongoose.model("submission", submissionSchema)
 module.exports = Submission
