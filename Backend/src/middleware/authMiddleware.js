@@ -11,6 +11,7 @@ const userAuth = async (req,res,next)=>{
             throw new Error("Token Doesn't exist");
         }
 
+
         const payload =  jwt.verify(token,process.env.JWT_SECRET);
 
         const {_id} = payload;
@@ -37,7 +38,9 @@ const userAuth = async (req,res,next)=>{
         next();
     }
     catch(err){
-        res.send("Error: "+ err.message)
+        res.status(401).json({
+            message: err.message
+        })
     }
 
 }

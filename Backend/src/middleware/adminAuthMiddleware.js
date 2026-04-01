@@ -26,7 +26,7 @@ async function adminAuth(req, res, next)
                 throw new Error("Invalid Token");
 
             if(user.role != "admin")
-                throw new Error("User is not an admin");
+                throw new Error("Invalid token");
 
             req.result = user;
             

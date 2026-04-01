@@ -13,12 +13,11 @@ const redisClient = require("../config/redis")
 async function register(req, res)
 {
     try{
+        console.log(req.body)
+    
         const data = validate(req.body);
         
-        if(Number.isNaN(data.age))
-        {
-           delete data.age
-        }
+      
     
         const isExisting = await User.findOne({email: data.email});
         if(isExisting)
@@ -28,15 +27,25 @@ async function register(req, res)
         const user =  await User.create(data);
         const token = jwt.sign({email: user.email, _id : user._id, role: "user"}, process.env.JWT_SECRET, {expiresIn: "24h"});
 
-        await sendVerificationEmail(user.email, token);
+        // await sendVerificationEmail(user.email, token);
 
-        res.status(201).send("User registration successfull, Check your email for verification");
+        const replyData = {
+            firstName : user.firstName,
+            emailId : user.email,
+            _id: user._id
+        }
+
+        res.cookie('token',token,{maxAge: 60*60*1000});
+        res.status(201).json({
+            user: replyData,
+            message: "Registration Successful"
+        });
 
 
     }
     catch(err)
     {
-        res.status(400).send("Error: "+ err.message);
+        res.status(400).json({message: err.message});
     }
 }
 
@@ -119,6 +128,7 @@ async function login(req, res)
     {
           // Get the data 
         const data = req.body;
+        
 
         const sanitizedData = validateLogin(data);
 
@@ -135,16 +145,29 @@ async function login(req, res)
         // Generate the token
         const token = jwt.sign({email: user.email, _id: user._id, }, process.env.JWT_SECRET, {expiresIn: "24h"});
         
-        if(!user.isEmailVerified)
-        {
-            await sendVerificationEmail(user.email, token)
-            res.status(200).send("Please check your email for verification")
+        // if(!user.isEmailVerified)
+        // {
+        //     await sendVerificationEmail(user.email, token)
+        //     res.status(200).send("Please check your email for verification")
+        // }
+        // else
+        // {
+        //     res.cookie("token", token, {expires: new Date(Date.now() + 24 * 60 * 60 * 1000)});
+        //     res.status(200).json({message: "User Login successful"});
+        // }
+
+        //  This is the data that will be sent to the user
+        const replyData = {
+            firstName : user.firstName,
+            emailId : user.email,
+            _id: user._id
         }
-        else
-        {
-            res.cookie("token", token, {expires: new Date(Date.now() + 24 * 60 * 60 * 1000)});
-            res.status(200).json({message: "User Login successful"});
-        }
+
+        res.cookie('token',token,{maxAge: 60*60*1000});
+        res.status(200).json({
+            user: replyData,
+            message: "Login Successful"
+        });
 
     }
     catch(error)

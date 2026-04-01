@@ -23,5 +23,17 @@ authRouter.get('/verify-email', verifyEmail);
 
 // Register Admin
 authRouter.post('/admin/register', adminAuth, registerAdmin);
+authRouter.get('/check', userAuth, (req, res)=>{
+    const reply = {
+        emailId: req.result.email,
+        _id: req.result._id,
+        firstName: req.result.firstName
+    }
+
+    res.status(200).json({
+        user: reply,
+        message: "Valid User"
+    })
+})
 
 module.exports = authRouter;

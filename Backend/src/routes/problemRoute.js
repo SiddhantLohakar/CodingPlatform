@@ -1,6 +1,6 @@
 const express = require('express')
 const adminAuth = require('../middleware/adminAuthMiddleware')
-const {createProblem, updateProblem, deleteProblem, getProblem, getAllProblems, getSolvedProblems} = require("../controllers/problemController")
+const {createProblem, updateProblem, deleteProblem, getProblem, getAllProblems, getSolvedProblems, submittedProblem} = require("../controllers/problemController")
 const userAuth = require("../middleware/authMiddleware")
 
 const problemRouter= express.Router();
@@ -11,6 +11,7 @@ problemRouter.post("/create",adminAuth, createProblem);
 problemRouter.get("/getProblem/:id",userAuth, getProblem);
 problemRouter.get("/getAllProblems",userAuth, getAllProblems);
 problemRouter.get("/getSolvedProblemByUser",userAuth, getSolvedProblems);
+problemRouter.get("/submittedProblem/:pid",userAuth,submittedProblem);
 
 // Update 
 problemRouter.put("/update/:id",adminAuth, updateProblem);
