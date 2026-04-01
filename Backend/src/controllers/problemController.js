@@ -165,23 +165,41 @@ const getProblem = async(req, res)=>{
     }
 }   
 
-const getAllProblems = async(req, res)=>{
-    const {page, limit} = req.query;
-    try{
-        if(!page || !limit)
-            return res.status(404).send("One of the query is missing");
+const getAllProblems = async (req, res) => {
+    try {
+        const { page, limit } = req.query;
 
-        const allProblems = await Problem.find({}).skip(Number((page-1)*limit)).limit(Number(limit));
-        console.log(allProblems);
-        if(!allProblems.length)
-            return res.status(404).send("No problems found");
+        const pageNum = Number(page);
+        const limitNum = Number(limit);
 
-        res.status(200).send(allProblems)
-    }catch(err)
-    {
+        if (!page || !limit) {
+            return res.status(400).send("Page and limit are required");
+        }
+
+        if (isNaN(pageNum) || isNaN(limitNum) || pageNum <= 0 || limitNum <= 0) {
+            return res.status(400).send("Invalid page or limit");
+        }
+
+        const skip = (pageNum - 1) * limitNum;
+
+        const [problems, total] = await Promise.all([
+            Problem.find({}).skip(skip).limit(limitNum).select(["_id","title", "difficulty", "tags"]),
+            Problem.countDocuments()
+        ]);
+
+        
+        res.status(200).json({
+            data: problems,
+            page: pageNum,
+            totalPages: Math.ceil(total / limitNum),
+            totalProblems: total
+        });
+
+    } catch (err) {
+        console.error(err);
         res.status(500).send("Internal server error");
     }
-}
+};
 
 
 const getSolvedProblems = async(req, res)=>{
