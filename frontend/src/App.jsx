@@ -5,6 +5,7 @@ import {BrowserRouter, Route, Routes, Navigate,  useNavigate} from 'react-router
 import Login from './pages/Login'
 import Signup from './pages/Signup'
 import Homepage from './pages/Homepage'
+import Editor from './pages/Editor'
 import { Loader2 } from "lucide-react";
 
 const Spinner = () => {
@@ -42,6 +43,7 @@ function App() {
       <Route path='/' element={isAuthenticated? <Homepage/> : <Navigate to="/login"/>}></Route>
       <Route path='/login' element={isAuthenticated? <Navigate to="/"/> :<Login/>}></Route>
       <Route path='/register' element={isAuthenticated? <Navigate to="/"/> : <Signup/>}></Route>
+      <Route path="/problem/:pid" element={isAuthenticated? <Editor/> : <Navigate to="/login"/>}></Route>
     </Routes>
   </BrowserRouter>
   )

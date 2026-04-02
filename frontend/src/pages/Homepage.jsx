@@ -7,6 +7,7 @@ import { useState, useEffect } from 'react'
 import { useSelector } from 'react-redux'
 import axiosClient from '../utils/axiosClient'
 import difficultyColors from '../utils/difficultyColors'
+import { Link } from 'react-router'
 
 const cardArray = [
   {
@@ -133,6 +134,14 @@ const Homepage = () => {
 
 
 
+
+  // Function for the handling click on any problem
+  const goToProblem = (id)=>{
+
+  }
+
+
+
   return (
     <div className='min-h-screen bg-linear-to-br from-slate-950 via-slate-900 to-slate-950 text-gray-100'>
       
@@ -210,7 +219,7 @@ const Homepage = () => {
                 return (
                    <tr  className='text-lg' key={value._id}>
                     <td className='p-6'>{value.isSolved ? <CheckCircle className='text-emerald-400 mx-auto'/> : <Circle className='text-red-400 mx-auto'/> }</td>
-                    <td className='text-center hover:text-blue-400 hover:cursor-pointer'>{value.title}</td>
+                    <td className='text-center hover:text-blue-400 hover:cursor-pointer' ><Link to = {`/problem/${value._id}`}>{value.title}</Link></td>
                     <td className='text-center'><span className= {`${difficultyColors[value.difficulty]} rounded-md p-1 w-[50%] inline-block`}>{value.difficulty}</span></td>
                     <td className='text-center'>{value.tags}</td>
                   </tr>
