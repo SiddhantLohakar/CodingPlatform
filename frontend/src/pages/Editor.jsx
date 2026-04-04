@@ -4,19 +4,28 @@ import axiosClient from '../utils/axiosClient'
 import { useState, useEffect } from 'react'
 import Editor from '@monaco-editor/react';
 import { reorderTabsInTree, addTabToPanel, removeTabFromTree, splitPanelInTree, cleanupEmptyPanels } from '../utils/CodeEditorUtils/Reorder';
-import SortableTabs from '../utils/CodeEditorUtils/SortableTabs';
 import RenderNode from '../utils/CodeEditorUtils/RenderNode';
 import { DragOverlay, closestCenter, pointerWithin } from '@dnd-kit/core';
 import { DndContext } from "@dnd-kit/core";
 import { GripVertical } from 'lucide-react';
+import { ChevronLeft, Play, Upload } from 'lucide-react';
 
 const CodeEditor = () => {
   const {pid} = useParams()
-  const [problem, setProblem] = useState([])
+  const [problem, setProblem] = useState({})
   const [hoveredPanel, setHoveredPanel] = useState(null);
   const [dropPosition, setDropPosition] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
   const [activeTab, setActiveTab] = useState(null);
+  const [code, setCode] = useState('');
+  const [language, setLanguage] = useState('javascript');
+  const [activeTabs, setActiveTabs] = useState({
+    left: 'description',
+    rightTop: 'code',
+    rightBottom: 'testcases'
+  });
+  const [testResults, setTestResults] = useState([]);
+  const [isRunning, setIsRunning] = useState(false);
 
   const tree = {
     type: "row",
@@ -46,7 +55,6 @@ const CodeEditor = () => {
   
   const [layout, setLayout] = useState(tree)
 
-  // Helper to find which panel contains a tab
   const findPanelWithTab = (node, tabId) => {
     if (node.type === "panel") {
       if (node.tabs.includes(tabId)) return node.id;
@@ -126,13 +134,63 @@ const CodeEditor = () => {
     setActiveTab(null);
   };
 
+
+  const handleRunCode = async () => {
+    setIsRunning(true);
+    setActiveTabs(prev => ({ ...prev, rightTop: 'result' }));
+    
+    // Simulate test execution
+    setTimeout(() => {
+      const results = problem?.visibleTestCases?.map((tc, i) => ({
+        ...tc,
+        passed: Math.random() > 0.3, // Random for now - replace with actual execution
+        actualOutput: tc.output
+      })) || [];
+      setTestResults(results);
+      setIsRunning(false);
+    }, 1500);
+  };
+
+
+  const handleSubmit = async () => {
+    // Submit logic here
+    console.log('Submitting code...');
+    alert('Code submitted! (Backend integration pending)');
+  };
+
+
+
   useEffect(()=>{
     async function getProblem() {
-      const p = await axiosClient.get(`/problem/getProblem/${pid}`);
-     
+      try
+      {
+        const p = await axiosClient.get(`/problem/getProblem/${pid}`);
+        
+       
+        setProblem(p.data);
+        const initialCode = p.data?.startCode?.find(c => c.language === language)?.initialCode || '';
+        setCode(initialCode);
+        
+      }
+      catch(err)
+      {
+        alert("Error fetching the problem")
+      }
     } 
     getProblem();
   }, [pid])
+
+
+
+  useEffect(() => {
+    // Update code when language changes
+    if (problem?.startCode) {
+      const newCode = problem.startCode.find(c => c.language === language)?.initialCode || '';
+      setCode(newCode);
+    }
+  }, [language, problem]);
+
+
 
   const handleMouseMove = (e, panelId) => {
     if (!isDragging) return;
@@ -155,68 +213,111 @@ const CodeEditor = () => {
   }
 
   return (
-   <>
-    <div className="h-screen box-border p-3 bg-black">
-         <nav></nav>
-        <div className="w-full h-full">
-          <DndContext
-            collisionDetection={pointerWithin}
-            onDragStart={(event) => {
-              setIsDragging(true);
-              setActiveTab(event.active.id); 
-            }}
-            onDragMove={(event) => {          // ← ADD THIS
-              const { activatorEvent, delta } = event;
-              const x = activatorEvent.clientX + delta.x;
-              const y = activatorEvent.clientY + delta.y;
-
-              // Find which panel element is under the pointer
-              const el = document.elementFromPoint(x, y);
-              const panelEl = el?.closest("[data-panel-id]");
-              
-              if (panelEl) {
-                const panelId = panelEl.getAttribute("data-panel-id");
-                const rect = panelEl.getBoundingClientRect();
-                const relX = x - rect.left;
-                const relY = y - rect.top;
-                const edgeThreshold = 0.25;
-                let position = "center";
-                if (relX < rect.width * edgeThreshold) position = "left";
-                else if (relX > rect.width * (1 - edgeThreshold)) position = "right";
-                else if (relY < rect.height * edgeThreshold) position = "top";
-                else if (relY > rect.height * (1 - edgeThreshold)) position = "bottom";
-
-                setHoveredPanel(panelId);
-                setDropPosition(position);
-              } else {
-                setHoveredPanel(null);
-                setDropPosition(null);
-              }
-            }}
-            onDragEnd={handleDragEnd}
-            onDragCancel={handleDragCancel}
-          >
-            <RenderNode 
-              node={layout}
-              handleMouseMove={handleMouseMove}
-              isDragging={isDragging}
-              setHoveredPanel={setHoveredPanel}
-              hoveredPanel={hoveredPanel}
-              dropPosition={dropPosition}
-            />
-            
-            <DragOverlay style={{ pointerEvents: "none" }}>
-              {activeTab ? (
-                <div className="p-3 flex items-center gap-2 bg-[#3b3b3b] text-white rounded-md shadow-lg">
-                  <GripVertical size={14} />
-                  {activeTab}
-                </div>
-              ) : null}
-            </DragOverlay>
-          </DndContext>
+   <div className="h-screen flex flex-col bg-[#1a1a1a]">
+      {/* Navbar */}
+      <nav className="h-14 bg-[#282828] border-b border-[#3d3d3d] flex items-center justify-between px-4">
+        <div className="flex items-center gap-4">
+          <button className="text-gray-400 hover:text-white transition">
+            <ChevronLeft size={20} />
+          </button>
+          <h1 className="text-white font-semibold text-lg">Code Arena</h1>
         </div>
+        
+        <div className="flex items-center gap-3">
+          <select 
+            value={language}
+            onChange={(e) => setLanguage(e.target.value)}
+            className="bg-[#3d3d3d] text-white px-3 py-1.5 rounded text-sm border border-[#4d4d4d] focus:outline-none focus:border-[#00a67e]"
+          >
+            <option value="javascript">JavaScript</option>
+            <option value="java">Java</option>
+            <option value="c++">C++</option>
+          </select>
+          
+          <button 
+            onClick={handleRunCode}
+            disabled={isRunning}
+            className="flex items-center gap-2 bg-[#3d3d3d] hover:bg-[#4d4d4d] text-white px-4 py-1.5 rounded text-sm font-medium transition disabled:opacity-50"
+          >
+            <Play size={16} />
+            {isRunning ? 'Running...' : 'Run'}
+          </button>
+          
+          <button 
+            onClick={handleSubmit}
+            className="flex items-center gap-2 bg-[#00a67e] hover:bg-[#00c896] text-white px-4 py-1.5 rounded text-sm font-medium transition"
+          >
+            <Upload size={16} />
+            Submit
+          </button>
+        </div>
+      </nav>
+ 
+      {/* Main Content */}
+      <div className="flex-1 p-3">
+        <DndContext
+          collisionDetection={pointerWithin}
+          onDragStart={(event) => {
+            setIsDragging(true);
+            setActiveTab(event.active.id); 
+          }}
+          onDragMove={(event) => {
+            const { activatorEvent, delta } = event;
+            const x = activatorEvent.clientX + delta.x;
+            const y = activatorEvent.clientY + delta.y;
+ 
+            const el = document.elementFromPoint(x, y);
+            const panelEl = el?.closest("[data-panel-id]");
+            
+            if (panelEl) {
+              const panelId = panelEl.getAttribute("data-panel-id");
+              const rect = panelEl.getBoundingClientRect();
+              const relX = x - rect.left;
+              const relY = y - rect.top;
+              const edgeThreshold = 0.25;
+              let position = "center";
+              if (relX < rect.width * edgeThreshold) position = "left";
+              else if (relX > rect.width * (1 - edgeThreshold)) position = "right";
+              else if (relY < rect.height * edgeThreshold) position = "top";
+              else if (relY > rect.height * (1 - edgeThreshold)) position = "bottom";
+ 
+              setHoveredPanel(panelId);
+              setDropPosition(position);
+            } else {
+              setHoveredPanel(null);
+              setDropPosition(null);
+            }
+          }}
+          onDragEnd={handleDragEnd}
+          onDragCancel={handleDragCancel}
+        >
+          <RenderNode 
+            node={layout}
+            handleMouseMove={() => {}}
+            isDragging={isDragging}
+            setHoveredPanel={setHoveredPanel}
+            hoveredPanel={hoveredPanel}
+            dropPosition={dropPosition}
+            problem={problem}
+            code={code}
+            setCode={setCode}
+            language={language}
+            activeTabs={activeTabs}
+            setActiveTabs={setActiveTabs}
+            testResults={testResults}
+          />
+          
+          <DragOverlay style={{ pointerEvents: "none" }}>
+            {activeTab ? (
+              <div className="p-3 flex items-center gap-2 bg-[#3b3b3b] text-white rounded-md shadow-lg">
+                <GripVertical size={14} />
+                {activeTab}
+              </div>
+            ) : null}
+          </DragOverlay>
+        </DndContext>
+      </div>
     </div>
-   </>
   )
 }
 
