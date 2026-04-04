@@ -23,7 +23,7 @@ function validateProblem(problem)
     }
     problem.visibleTestCases.forEach((p)=>{
 
-        if(!p.input || !p.output || !p.explaination)
+        if(p.input === undefined || p.output === undefined || p.explaination === undefined)
         {
             throw new Error("One of the field of visible test cases is missing");
         }
