@@ -9,6 +9,7 @@ import { DragOverlay, closestCenter, pointerWithin } from '@dnd-kit/core';
 import { DndContext } from "@dnd-kit/core";
 import { GripVertical } from 'lucide-react';
 import { ChevronLeft, Play, Upload } from 'lucide-react';
+import { getProblem, getSubmittedProblem } from '../utils/CodeEditorUtils/ProblemsFetching';
 
 const CodeEditor = () => {
   const {pid} = useParams()
@@ -26,6 +27,9 @@ const CodeEditor = () => {
   });
   const [testResults, setTestResults] = useState([]);
   const [isRunning, setIsRunning] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submittedProblems, setSubmittedProblems] = useState([]);
+
 
   const tree = {
     type: "row",
@@ -134,50 +138,78 @@ const CodeEditor = () => {
     setActiveTab(null);
   };
 
-
   const handleRunCode = async () => {
     setIsRunning(true);
     setActiveTabs(prev => ({ ...prev, rightTop: 'result' }));
     
-    // Simulate test execution
-    setTimeout(() => {
-      const results = problem?.visibleTestCases?.map((tc, i) => ({
-        ...tc,
-        passed: Math.random() > 0.3, // Random for now - replace with actual execution
-        actualOutput: tc.output
-      })) || [];
-      setTestResults(results);
+    try {
+      const response = await axiosClient.post('/submission/run', {
+        problemId: pid,
+        inputCode: code,
+        language: language
+      });
+      
+      setTestResults(response.data);
+    } catch (error) {
+      console.error('Error running code:', error);
+      alert('Failed to run code. Please try again.');
+      setTestResults([]);
+    } finally {
       setIsRunning(false);
-    }, 1500);
+    }
   };
 
 
-  const handleSubmit = async () => {
-    // Submit logic here
-    console.log('Submitting code...');
-    alert('Code submitted! (Backend integration pending)');
-  };
 
+const handleSubmit = async () => {
+  setIsSubmitting(true);
+  
+  try {
+    const response = await axiosClient.post('/submission/submit', {
+      problemId: pid,
+      inputCode: code,
+      language: language
+    });
+    
+    // Show success/failure message
+    if (response.data.status === 'accepted') {
+      alert(`✅ ${response.data.message}\n\nRuntime: ${response.data.runtime}s\nMemory: ${response.data.memory} KB`);
+    } else {
+      alert(`❌ ${response.data.message}\n\nPlease review your code and try again.`);
+    }
+    
+    // Optionally switch to submissions tab
+    setActiveTabs(prev => ({ ...prev, left: 'submissions' }));
+    
+  } catch (error) {
+    console.error('Error submitting code:', error);
+    alert('Failed to submit code. Please try again.');
+  } finally {
+    const sProblem = getSubmittedProblem(pid);
+    setIsSubmitting(false);
+    setSubmittedProblems(sProblem.data);
+
+  }
+};
+    
+    
 
 
   useEffect(()=>{
-    async function getProblem() {
-      try
-      {
-        const p = await axiosClient.get(`/problem/getProblem/${pid}`);
-        
-       
-        setProblem(p.data);
-        const initialCode = p.data?.startCode?.find(c => c.language === language)?.initialCode || '';
-        setCode(initialCode);
-        
-      }
-      catch(err)
-      {
-        alert("Error fetching the problem")
-      }
-    } 
-    getProblem();
+
+    async function fetchData() {
+    // 🔹 get problem
+    const problem = await getProblem({pid, language});
+    setProblem(problem.data);
+    setCode(problem.initialCode);
+
+    // 🔹 get submissions
+    const sProblem = await getSubmittedProblem(pid);
+    setSubmittedProblems(sProblem.data);
+  }
+
+  fetchData();
+
   }, [pid])
 
 
@@ -213,14 +245,14 @@ const CodeEditor = () => {
   }
 
   return (
-   <div className="h-screen flex flex-col bg-[#1a1a1a]">
+   <div className="h-screen flex flex-col bg-[#1a1a1a] overflow-hidden">
       {/* Navbar */}
       <nav className="h-14 bg-[#282828] border-b border-[#3d3d3d] flex items-center justify-between px-4">
         <div className="flex items-center gap-4">
           <button className="text-gray-400 hover:text-white transition">
             <ChevronLeft size={20} />
           </button>
-          <h1 className="text-white font-semibold text-lg">Code Arena</h1>
+          <h1 className="text-white font-semibold text-lg">Nexus Code</h1>
         </div>
         
         <div className="flex items-center gap-3">
@@ -245,16 +277,17 @@ const CodeEditor = () => {
           
           <button 
             onClick={handleSubmit}
-            className="flex items-center gap-2 bg-[#00a67e] hover:bg-[#00c896] text-white px-4 py-1.5 rounded text-sm font-medium transition"
+            disabled={isSubmitting || isRunning}
+            className="flex items-center gap-2 bg-[#00a67e] hover:bg-[#00c896] text-white px-4 py-1.5 rounded text-sm font-medium transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Upload size={16} />
-            Submit
+            {isSubmitting ? 'Submitting...' : 'Submit'}
           </button>
         </div>
       </nav>
  
       {/* Main Content */}
-      <div className="flex-1 p-3">
+      <div className="flex-1 p-3 min-h-0">
         <DndContext
           collisionDetection={pointerWithin}
           onDragStart={(event) => {
@@ -302,9 +335,11 @@ const CodeEditor = () => {
             code={code}
             setCode={setCode}
             language={language}
+            setLanguage = {setLanguage}
             activeTabs={activeTabs}
             setActiveTabs={setActiveTabs}
             testResults={testResults}
+            submittedProblems = {submittedProblems}
           />
           
           <DragOverlay style={{ pointerEvents: "none" }}>

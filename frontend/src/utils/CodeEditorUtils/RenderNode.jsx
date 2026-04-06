@@ -39,15 +39,18 @@ const RenderNode = ({
   code,
   setCode,
   language,
+  setLanguage,
   activeTabs,
   setActiveTabs,
-  testResults
+  testResults,
+  submittedProblems
 }) => {
+
 
   // 🔹 ROW → horizontal split
   if (node.type === "row") {
     return (
-      <Group orientation="horizontal">
+      <Group orientation="horizontal" className="h-full">
         {node.children.map((child, index) => (
           <React.Fragment key={index}>
             <Panel>
@@ -62,9 +65,11 @@ const RenderNode = ({
                 code={code}
                 setCode={setCode}
                 language={language}
+                setLanguage = {setLanguage}
                 activeTabs={activeTabs}
                 setActiveTabs={setActiveTabs}
                 testResults={testResults}
+                submittedProblems={submittedProblems}
               />
             </Panel>
             {index < node.children.length - 1 && (
@@ -79,7 +84,7 @@ const RenderNode = ({
   // 🔹 COLUMN → vertical split
   if (node.type === "column") {
     return (
-      <Group orientation="vertical">
+      <Group orientation="vertical" className="h-full">
         {node.children.map((child, index) => (
           <React.Fragment key={index}>
             <Panel>
@@ -94,9 +99,11 @@ const RenderNode = ({
                 code={code}
                 setCode={setCode}
                 language={language}
+                setLanguage={setLanguage}
                 activeTabs={activeTabs}
                 setActiveTabs={setActiveTabs}
                 testResults={testResults}
+                submittedProblems={submittedProblems}
               />
             </Panel>
             {index < node.children.length - 1 && (
@@ -124,26 +131,62 @@ const RenderNode = ({
       if (!problem) return <div className="text-gray-400">Loading...</div>;
     
       switch (tabId) {
-        case "description":
-          return (
-            <div className="prose prose-invert max-w-none">
-              <h2 className="text-2xl font-bold text-white mb-4">{problem?.title}</h2>
-              <div className="flex items-center gap-3 mb-6">
-                <span className={`px-3 py-1 rounded text-sm font-medium ${
-                  problem?.difficulty === 'easy' ? 'bg-green-500/20 text-green-400' :
-                  problem?.difficulty === 'medium' ? 'bg-yellow-500/20 text-yellow-400' :
-                  'bg-red-500/20 text-red-400'
-                }`}>
-                  {problem?.difficulty?.charAt(0).toUpperCase() + problem?.difficulty?.slice(1)}
-                </span>
-                <span className="px-3 py-1 bg-blue-500/20 text-blue-400 rounded text-sm">
-                  {problem?.tags}
-                </span>
-              </div>
-              <p className="text-gray-300 leading-relaxed whitespace-pre-wrap">{problem?.description}</p>
+       case "description":
+        return (
+          <div className="prose prose-invert max-w-none ">
+            <h2 className="text-2xl font-bold text-white mb-4">{problem?.title}</h2>
+            <div className="flex items-center gap-3 mb-6">
+              <span className={`px-3 py-1 rounded text-sm font-medium ${
+                problem?.difficulty === 'easy' ? 'bg-green-500/20 text-green-400' :
+                problem?.difficulty === 'medium' ? 'bg-yellow-500/20 text-yellow-400' :
+                'bg-red-500/20 text-red-400'
+              }`}>
+                {problem?.difficulty?.charAt(0).toUpperCase() + problem?.difficulty?.slice(1)}
+              </span>
+              <span className="px-3 py-1 bg-blue-500/20 text-blue-400 rounded text-sm">
+                {problem?.tags}
+              </span>
             </div>
-          );
-    
+            <p className="text-gray-300 leading-relaxed whitespace-pre-wrap mb-8">{problem?.description}</p>
+            
+            {/* Visible Test Cases Section */}
+            <div className="mt-8">
+              <h3 className="text-xl font-semibold text-white mb-4">Examples</h3>
+              <div className="space-y-4">
+                {problem?.visibleTestCases?.map((tc, i) => (
+                  <div key={i} className="bg-[#2a2a2a] rounded-lg border border-[#3d3d3d] overflow-hidden">
+                    <div className="px-4 py-2 bg-[#1e1e1e] border-b border-[#3d3d3d]">
+                      <span className="text-sm font-medium text-gray-300">Example {i + 1}</span>
+                    </div>
+                    <div className="p-4 space-y-3 text-sm">
+                      <div>
+                        <span className="text-gray-400 font-medium">Input:</span>
+                        <div className="mt-1 p-3 bg-[#1e1e1e] rounded text-gray-200 font-mono border border-[#3d3d3d]">
+                          {tc.input}
+                        </div>
+                      </div>
+                      <div>
+                        <span className="text-gray-400 font-medium">Output:</span>
+                        <div className="mt-1 p-3 bg-[#1e1e1e] rounded text-gray-200 font-mono border border-[#3d3d3d]">
+                          {tc.output}
+                        </div>
+                      </div>
+                      {tc.explaination && (
+                        <div>
+                          <span className="text-gray-400 font-medium">Explanation:</span>
+                          <div className="mt-1 text-gray-300 leading-relaxed">
+                            {tc.explaination}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        );
+          
         case "testcases":
           return (
             <div>
@@ -174,12 +217,6 @@ const RenderNode = ({
                           <span className="text-gray-400">Expected Output:</span>
                           <div className="mt-1 p-2 bg-[#0d0d0d] rounded text-gray-200 font-mono">{tc.output}</div>
                         </div>
-                        {tc.explaination && (
-                          <div>
-                            <span className="text-gray-400">Explanation:</span>
-                            <div className="mt-1 text-gray-300">{tc.explaination}</div>
-                          </div>
-                        )}
                       </div>
                     </div>
                   );
@@ -190,6 +227,7 @@ const RenderNode = ({
     
         case "code":
           return (
+            <div className="h-full min-h-0">
             <Editor
               height="100%"
               language={language === 'c++' ? 'cpp' : language}
@@ -209,6 +247,8 @@ const RenderNode = ({
                 wordWrap: 'on'
               }}
             />
+
+            </div>
           );
     
         case "result":
@@ -313,7 +353,50 @@ const RenderNode = ({
           return (
             <div className="text-gray-300">
               <h3 className="font-semibold text-white mb-4">Submissions</h3>
-              <p>No submissions yet. Submit your code to see history.</p>
+
+              {
+                 submittedProblems?.length === 0 ? (
+                <div className="text-center text-gray-400 mt-6">
+                  No submissions yet. Submit your code to see history.
+                </div>
+              ) : (
+                <div className="flex flex-col gap-3">
+                  {submittedProblems?.map((submission, index) => (
+                    <div
+                      key={index}
+                      className="flex justify-between items-center bg-[#1e1e1e] hover:bg-[#2a2a2a] transition-all p-4 rounded-xl shadow-md border border-gray-700"
+                    >
+                      {/* LEFT: LANGUAGE + INFO */}
+                      <div className="flex flex-col">
+                        <span className="text-lg font-semibold text-purple-400">
+                          {submission.language.toUpperCase()}
+                        </span>
+                        <span className="text-sm text-gray-400">
+                          Submission #{index + 1}
+                        </span>
+                      </div>
+
+                      {/* RIGHT: STATUS */}
+                      <div>
+                        <span
+                          className={`px-3 py-1 rounded-full text-sm font-medium ${
+                            submission.status === "accepted"
+                              ? "bg-green-900 text-green-400"
+                              : "bg-red-900 text-red-400"
+                          } hover:cursor-pointer hover:underline`}
+                           onClick={()=>{
+                            setCode(submission.inputCode)
+                            setLanguage(submission.language)  
+                          }}>
+                          {submission.status}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                )
+              }
+              
             </div>
           );
     
@@ -377,7 +460,7 @@ const RenderNode = ({
         </div>
 
         {/* Content Area */}
-        <div className="flex-1 p-4 overflow-auto">
+        <div className="flex-1 p-4 overflow-auto min-h-0">
           {node.tabs.length > 0
             ? renderTabContent(activeTabId)
             : <div className="text-gray-400">Empty Panel</div>}
