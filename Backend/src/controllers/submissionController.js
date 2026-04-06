@@ -14,7 +14,7 @@ const Submission =  require("../models/submission")
 //     const problem = await Problem.findById(data.problemId);
 
 //     if(!problem)
-//         return res.status(404).json({"message" : "Problem not found"});
+//         return res.status(404).json({"message" : "Problem ut found"});
 
 
 //     const initialSubmit = {
