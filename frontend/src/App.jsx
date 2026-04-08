@@ -8,6 +8,10 @@ import Homepage from './pages/Homepage'
 import { Loader2 } from "lucide-react";
 import CodeEditor from './pages/Editor'
 import Admin from './pages/Admin'
+import CreateProblem from './components/Admin/CreateProblem'
+import UpdateProblem from './components/Admin/UpdateProblem'
+import DeleteProblem from './components/Admin/DeleteProblem'
+import Dashboard from './components/Admin/Dashboard'
 
 const Spinner = () => {
   return (
@@ -46,7 +50,12 @@ function App() {
       <Route path='/login' element={isAuthenticated? <Navigate to="/"/> :<Login/>}></Route>
       <Route path='/register' element={isAuthenticated? <Navigate to="/"/> : <Signup/>}></Route>
       <Route path="/problem/:pid" element={isAuthenticated? <CodeEditor/> : <Navigate to="/login"/>}></Route>
-      <Route path="/admin" element={isAuthenticated && data.role == "admin" ? <Admin/> : <Navigate to = "/login"/>}></Route>
+      <Route path="/admin" element={isAuthenticated && data.role == "admin" ? <Admin/> : <Navigate to = "/login"/>}>
+          <Route index element={<Dashboard/>}></Route>
+          <Route path="create" element={<CreateProblem/>}></Route>
+          <Route path="update" element={<UpdateProblem/>}></Route>
+          <Route path="delete" element={<DeleteProblem/>}></Route>
+      </Route>
     </Routes>
   </BrowserRouter>
   )

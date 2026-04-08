@@ -1,11 +1,13 @@
-import React from 'react'
+import React from "react";
+import { Outlet } from "react-router";
+
 
 const Admin = () => {
   return (
-    <div>
-      admin
-    </div>
-  )
-}
+    <>
+      <Outlet/>
+    </>
+  );
+};
 
-export default Admin
+export default Admin;
