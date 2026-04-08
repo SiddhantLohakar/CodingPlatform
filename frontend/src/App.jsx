@@ -7,6 +7,7 @@ import Signup from './pages/Signup'
 import Homepage from './pages/Homepage'
 import { Loader2 } from "lucide-react";
 import CodeEditor from './pages/Editor'
+import Admin from './pages/Admin'
 
 const Spinner = () => {
   return (
@@ -23,7 +24,8 @@ const Spinner = () => {
 function App() {
   
   const dispatch = useDispatch();
-  const {isAuthenticated, isLoading} = useSelector((state)=>state.auth)
+  const {isAuthenticated, isLoading, data} = useSelector((state)=>state.auth)
+
   
 
   useEffect(()=>{
@@ -44,6 +46,7 @@ function App() {
       <Route path='/login' element={isAuthenticated? <Navigate to="/"/> :<Login/>}></Route>
       <Route path='/register' element={isAuthenticated? <Navigate to="/"/> : <Signup/>}></Route>
       <Route path="/problem/:pid" element={isAuthenticated? <CodeEditor/> : <Navigate to="/login"/>}></Route>
+      <Route path="/admin" element={isAuthenticated && data.role == "admin" ? <Admin/> : <Navigate to = "/login"/>}></Route>
     </Routes>
   </BrowserRouter>
   )
