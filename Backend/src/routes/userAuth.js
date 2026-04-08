@@ -27,7 +27,8 @@ authRouter.get('/check', userAuth, (req, res)=>{
     const reply = {
         emailId: req.result.email,
         _id: req.result._id,
-        firstName: req.result.firstName
+        firstName: req.result.firstName,
+        role : req.result.role
     }
 
     res.status(200).json({

@@ -13,7 +13,6 @@ const redisClient = require("../config/redis")
 async function register(req, res)
 {
     try{
-        console.log(req.body)
     
         const data = validate(req.body);
         
@@ -32,7 +31,8 @@ async function register(req, res)
         const replyData = {
             firstName : user.firstName,
             emailId : user.email,
-            _id: user._id
+            _id: user._id,
+            role: user.role
         }
 
         res.cookie('token',token,{maxAge: 60*60*1000});
@@ -160,7 +160,8 @@ async function login(req, res)
         const replyData = {
             firstName : user.firstName,
             emailId : user.email,
-            _id: user._id
+            _id: user._id,
+            role: user.role
         }
 
         res.cookie('token',token,{maxAge: 60*60*1000});
