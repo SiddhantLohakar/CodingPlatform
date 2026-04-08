@@ -29,6 +29,7 @@ const CodeEditor = () => {
   const [isRunning, setIsRunning] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submittedProblems, setSubmittedProblems] = useState([]);
+  const [isFromSubmission, setIsFromSubmission] = useState(false);
 
 
   const tree = {
@@ -216,10 +217,12 @@ const handleSubmit = async () => {
 
   useEffect(() => {
     // Update code when language changes
-    if (problem?.startCode) {
+    if (problem?.startCode && !isFromSubmission) {
       const newCode = problem.startCode.find(c => c.language === language)?.initialCode || '';
       setCode(newCode);
     }
+
+    setIsFromSubmission(false);
   }, [language, problem]);
 
 
@@ -340,6 +343,7 @@ const handleSubmit = async () => {
             setActiveTabs={setActiveTabs}
             testResults={testResults}
             submittedProblems = {submittedProblems}
+            setIsFromSubmission={setIsFromSubmission}
           />
           
           <DragOverlay style={{ pointerEvents: "none" }}>

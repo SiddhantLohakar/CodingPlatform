@@ -43,8 +43,10 @@ const RenderNode = ({
   activeTabs,
   setActiveTabs,
   testResults,
-  submittedProblems
+  submittedProblems,
+  setIsFromSubmission
 }) => {
+
 
 
   // 🔹 ROW → horizontal split
@@ -70,6 +72,7 @@ const RenderNode = ({
                 setActiveTabs={setActiveTabs}
                 testResults={testResults}
                 submittedProblems={submittedProblems}
+                setIsFromSubmission = {setIsFromSubmission}
               />
             </Panel>
             {index < node.children.length - 1 && (
@@ -104,6 +107,7 @@ const RenderNode = ({
                 setActiveTabs={setActiveTabs}
                 testResults={testResults}
                 submittedProblems={submittedProblems}
+                setIsFromSubmission = {setIsFromSubmission}
               />
             </Panel>
             {index < node.children.length - 1 && (
@@ -385,8 +389,9 @@ const RenderNode = ({
                               : "bg-red-900 text-red-400"
                           } hover:cursor-pointer hover:underline`}
                            onClick={()=>{
-                            setCode(submission.inputCode)
+                            setIsFromSubmission(true);
                             setLanguage(submission.language)  
+                            setCode(submission.inputCode)
                           }}>
                           {submission.status}
                         </span>
