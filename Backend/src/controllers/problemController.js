@@ -9,7 +9,6 @@ const Submission = require("../models/submission");
 const createProblem = async (req, res)=>{
 
     validateProblem(req.body);
-
     const {title, description, difficulty, tags, visibleTestCases, hiddenTestCases, startCode, referenceSolution, problemCreator} = req.body;
 
     try{
@@ -58,7 +57,7 @@ const createProblem = async (req, res)=>{
         }
 
         await Problem.create({...req.body, problemCreator: req.result._id})
-        res.status(201).send("Problem creted successfully")
+        res.status(201).send("Problem created successfully")
 
     }catch(err)
     {
