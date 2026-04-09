@@ -61,8 +61,18 @@ const problemSchema = new Schema({
             required: true,
         },
         initialCode:{
-            type: String,
-            required: true
+            header:{
+                type: String,
+                default: ""
+            },
+            function:{
+                type: String,
+                required: true
+            },
+            main: {
+                type: String,
+                default: ""
+            }
         }
     }],
 

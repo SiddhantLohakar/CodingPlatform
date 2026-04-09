@@ -1,5 +1,6 @@
 function validateProblem(problem)
 {
+    
     const errors = []
     // Validation for title
     if(!problem.title)
@@ -52,8 +53,8 @@ function validateProblem(problem)
 
     
     problem.startCode.forEach((p)=>{
-
-       if(!p.language || !p.initialCode)
+       
+        if(!p.language || !p.initialCode ||  p.initialCode.header === undefined || p.initialCode.function === undefined || p.initialCode.main === undefined)
         {
         throw new Error("one of the fields for startCode solution is missing")
         }
