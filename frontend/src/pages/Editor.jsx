@@ -186,10 +186,9 @@ const handleSubmit = async () => {
     console.error('Error submitting code:', error);
     alert('Failed to submit code. Please try again.');
   } finally {
-    const sProblem = getSubmittedProblem(pid);
+    const sProblem = await getSubmittedProblem(pid);
     setIsSubmitting(false);
     setSubmittedProblems(sProblem.data);
-
   }
 };
     
@@ -202,7 +201,7 @@ const handleSubmit = async () => {
     // 🔹 get problem
     const problem = await getProblem({pid, language});
     setProblem(problem.data);
-    setCode(problem.initialCode);
+    setCode(problem.initialCode.function);
 
     // 🔹 get submissions
     const sProblem = await getSubmittedProblem(pid);
@@ -219,7 +218,8 @@ const handleSubmit = async () => {
     // Update code when language changes
     if (problem?.startCode && !isFromSubmission) {
       const newCode = problem.startCode.find(c => c.language === language)?.initialCode || '';
-      setCode(newCode);
+      console.log(newCode);
+      setCode(newCode.function);
     }
 
     setIsFromSubmission(false);
