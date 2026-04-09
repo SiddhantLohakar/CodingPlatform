@@ -154,7 +154,7 @@ const Submission =  require("../models/submission")
 
 async function run(req, res){
     const data = req.body;
-
+    
     if(!data || !data.problemId || !data.inputCode || !data.language){
         return res.status(400).json({"message": " problemId, inputCode and language are required"});
     }
@@ -168,6 +168,27 @@ async function run(req, res){
     try{
         const languageId = getLanguageId(data.language);
         
+        const languageCode = problem.startCode.find((value)=>value.language == data.language);
+       
+        if (data.language === "java") {
+
+            data.inputCode =
+                languageCode.initialCode.header +
+                "\npublic class Main {\n" +
+                data.inputCode +
+                "\n" +
+                languageCode.initialCode.main +
+                "\n}";
+
+        } else {
+            data.inputCode =
+                languageCode.initialCode.header +
+                "\n" +
+                data.inputCode +
+                "\n" +
+                languageCode.initialCode.main;
+        }
+       
         const Batch = problem.visibleTestCases.map(({input, output})=>{
             return{
                 source_code: data.inputCode,
@@ -236,10 +257,32 @@ async function submit(req, res){
     try{
         const languageId = getLanguageId(data.language);
         const totalTestCases = [...problem.visibleTestCases , ...problem.hiddenTestCases];
+        const languageCode = problem.startCode.find((value)=>value.language == data.language);
+        let code = "";
+        if (data.language === "java") {
+
+            code =
+                languageCode.initialCode.header +
+                "\npublic class Main {\n" +
+                data.inputCode +
+                "\n" +
+                languageCode.initialCode.main +
+                "\n}";
+
+        } else {
+            code =
+                languageCode.initialCode.header +
+                "\n" +
+                data.inputCode +
+                "\n" +
+                languageCode.initialCode.main;
+        }
+
+
         
         const Batch = totalTestCases.map(({input, output})=>{
             return{
-                source_code: data.inputCode,
+                source_code: code,
                 language_id: languageId,
                 stdin: input,
                 expected_output: output
